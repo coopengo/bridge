@@ -1,0 +1,73 @@
+#!/bin/bash
+# vim: set ft=sh:
+
+get_dir() {
+        local script_path; script_path=$(readlink -f "$0")
+        local script_dir; script_dir=$(dirname "$script_path")
+        echo "$script_dir"
+}
+
+WD=$(get_dir)
+
+pull_hg() {
+        cd "$WD/hg/$1"
+        hg pull
+}
+
+convert() {
+        cd "$WD/git/$1"
+        "$WD/fast-export/hg-fast-export.sh" -r "$WD/hg/$1"
+}
+
+push_git() {
+        cd "$WD/git/$1"
+        git checkout b2ck &> /dev/null
+        if [ $? -eq 0 ]
+        then
+                git merge master
+        else
+                git checkout master
+                git checkout .
+                git checkout -b b2ck
+        fi
+        git push origin b2ck
+        while read branch
+        do
+                git push origin "$branch"
+        done < "$WD/branches"
+}
+
+manage() {
+        echo "### $1 ###"
+        (pull_hg "$1")
+        [ $? -ne 0 ] && echo "pull failed" && return $?
+        (convert "$1") &> /dev/null
+        [ $? -ne 0 ] && echo "convert failed" && return $?
+        (push_git "$1")
+        [ $? -ne 0 ] && echo "push failed" && return $?
+}
+
+main() {
+        if [ -z "$1" ]
+        then
+                while read repo
+                do
+                        manage "$repo"
+                        echo
+                done < "$WD/repos"
+                while read repo
+                do
+                        manage "$repo"
+                        echo
+                done < "$WD/modules"
+        else
+                while [ ! -z "$1" ]
+                do
+                        manage "$1"
+                        echo
+                        shift
+                done
+        fi
+}
+
+main "$@"
