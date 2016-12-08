@@ -11,13 +11,14 @@ WD=$(get_dir)
 
 _init_hg() {
         echo "### $1 hg ###"
+        cd "$WD/hg" || return $?
         hg clone "http://hg.tryton.org/$1"
         echo
 }
 
 init_hg() {
         [ -e "$WD/hg" ] && echo "hg already initialized" && return 1
-        mkdir "$WD/hg" && cd "$_" || return 1
+        mkdir "$WD/hg" || return $?
         local repo
         while read repo
         do
@@ -31,7 +32,7 @@ init_hg() {
 
 _init_git() {
         echo "### $1 git ###"
-        cd "$WD/git/$1"
+        mkdir "$WD/git/$1" && cd "$_" || return 1
         git init
         git remote add origin "git@github.com:coopengo/$1.git"
         echo
@@ -39,24 +40,29 @@ _init_git() {
 
 init_git() {
         [ -e "$WD/git" ] && echo "git already initialized" && return 1
-        mkdir "$WD/git" && cd "$_" || return 1
+        mkdir "$WD/git" || return $?
         local repo
         while read repo
         do
-                mkdir "$repo"
                 (_init_git "$repo")
         done < "$WD/repos"
         while read repo
         do
-                mkdir "$repo"
                 (_init_git "$repo")
         done < "$WD/modules"
 
 }
 
-init() {
-        init_hg || return $?
-        init_git || return $?
+main() {
+        if [ -z "$1" ]
+        then
+                init_hg || return $?
+                init_git || return $?
+        else
+                [ $# -ne 2 ] && echo "bad params number" && return 1
+                ("_init_$1" "$2")
+                return $?
+        fi
 }
 
-init "$@"
+main "$@"
