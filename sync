@@ -31,6 +31,7 @@ push_git() {
                 git checkout -b b2ck
         fi
         git push origin b2ck
+        local branch
         while read branch
         do
                 git push origin "$branch"
@@ -50,6 +51,7 @@ manage() {
 main() {
         if [ -z "$1" ]
         then
+                local repo
                 while read repo
                 do
                         manage "$repo"

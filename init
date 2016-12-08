@@ -9,27 +9,38 @@ get_dir() {
 
 WD=$(get_dir)
 
+_init_hg() {
+        echo "### $1 hg ###"
+        hg clone "http://hg.tryton.org/$1"
+        echo
+}
+
 init_hg() {
         [ -e "$WD/hg" ] && echo "hg already initialized" && return 1
         mkdir "$WD/hg" && cd "$_" || return 1
+        local repo
         while read repo
         do
-                hg clone "http://hg.tryton.org/$repo"
+                (_init_hg "$repo")
         done < "$WD/repos"
         while read repo
         do
-                hg clone "http://hg.tryton.org/modules/$repo"
+                (_init_hg "modules/$repo")
         done < "$WD/modules"
 }
 
 _init_git() {
+        echo "### $1 git ###"
         cd "$WD/git/$1"
         git init
+        git remote add origin "git@github.com:coopengo/$1.git"
+        echo
 }
 
 init_git() {
         [ -e "$WD/git" ] && echo "git already initialized" && return 1
         mkdir "$WD/git" && cd "$_" || return 1
+        local repo
         while read repo
         do
                 mkdir "$repo"
