@@ -1,0 +1,78 @@
+#!/bin/bash
+# vim: set ft=sh:
+
+[ -z "$1" ] && echo missing tryton branch && exit 1
+TRYTON_BRANCH="$1"; shift
+echo "$TRYTON_BRANCH" | grep -P "^\d\.\d+$" &> /dev/null # tryton branches ~ <major>.<minor>
+[ $? -ne 0 ] && echo bad tryton branch && exit 1
+
+[ -z "$1" ] && echo missing coog branch && exit 1
+COOG_BRANCH="$1"; shift
+echo "$COOG_BRANCH" | grep -P "^(master|merge|coog-\d\.\d+)$" &> /dev/null # coog branches ~ coog-<major>.<minor>
+[ $? -ne 0 ] && echo bad coog branch && exit 1
+
+sync() {
+        local diff
+        diff=$(git diff HEAD | wc -l)
+        [ "$diff" -ne 0 ] && echo repo not clean && return 1
+        git fetch -p &&
+                git checkout "$TRYTON_BRANCH" &&
+                git rebase origin/"$TRYTON_BRANCH" &&
+                git checkout "$COOG_BRANCH" &&
+                git rebase origin/"$COOG_BRANCH"
+}
+
+merge() {
+        git checkout "$COOG_BRANCH" &&
+                git merge "$TRYTON_BRANCH" --no-edit &&
+                git push origin "$COOG_BRANCH"
+}
+
+sync_proteus() {
+        cd proteus && sync && merge
+        cd ..
+}
+
+sync_sao() {
+        cd sao && sync && merge
+        cd ..
+}
+
+sync_tryton() {
+        cd tryton && sync && merge
+        cd ..
+}
+
+sync_trytond() {
+        cd trytond && sync && merge
+        cd ..
+}
+
+sync_modules() {
+        cd trytond-modules && sync
+        [ $? -ne 0 ] && cd .. && return 1
+        local st=0
+        for repo in modules/*
+        do
+                if [ -d "$repo" ] && [ -e "$repo"/.git ]
+                then
+                        echo
+                        echo Work on "$repo"
+                        cd "$repo" && sync && merge
+                        [ $? -ne 0 ] && st=1 && echo Error on "$repo"
+                        cd ../..
+                fi
+        done
+        [ $st -ne 0 ] && cd .. && return 1
+        git checkout "$TRYTON_BRANCH" && git submodule foreach git checkout "$TRYTON_BRANCH" && git add . && git commit -m "update modules" && git push origin "$TRYTON_BRANCH"
+        git checkout "$COOG_BRANCH" && git submodule foreach git checkout "$COOG_BRANCH" && git add . && git commit -m "update modules" && git push origin "$COOG_BRANCH"
+        cd ..
+}
+
+main() {
+        [ -z "$1" ] && echo missing repo && return 1
+        "sync_$1"
+}
+
+_target=$(readlink -f "$0" | xargs dirname)/../..
+(cd "$_target"; main "$@")
