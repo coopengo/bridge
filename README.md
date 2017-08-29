@@ -29,3 +29,12 @@ To synchronize all repositories
 ```
 ./sync
 ```
+
+### Merge Branches
+
+The synchronized branches now need to be merged. It is possible to run `sync-tryton` to merge the branches
+but you must handle conflicts manually.
+
+```
+./sync-tryton <repo>
+```
