@@ -8,6 +8,8 @@ account_payment_sepa
 account_payment_sepa_cfonb
 account_product
 account_statement
+analytic_account
+analytic_invoice
 bank
 commission
 commission_waiting
