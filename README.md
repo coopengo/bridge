@@ -16,6 +16,15 @@ git submodule update
 ./init
 ```
 
+### Checkout to appropriate branch
+
+Unless you are synchronizing Tryton repositories with Coog on master, checkout to the appropriate bridge branch
+
+```
+git checkout coog-<version>
+```
+This is very important, otherwise unwanted modules will be added.
+
 ### Sync Git Repos
 
 To synchronize a set of repositories
@@ -38,3 +47,7 @@ but you must handle conflicts manually.
 ```
 ./sync-tryton <repo>
 ```
+
+## Documentation
+
+- [Add a new tryton repository to trytond-modules](doc/add_repo_trytond_modules.md)
