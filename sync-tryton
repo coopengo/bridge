@@ -67,7 +67,7 @@ main() {
 
         [ -z "$1" ] && echo missing coog branch && return 1
         COOG_BRANCH="$1"; shift
-        echo "$COOG_BRANCH" | grep -P "^(master|merge|coog-\d\.\d+)$" &> /dev/null # coog branches ~ coog-<major>.<minor>
+        echo "$COOG_BRANCH" | grep -P "^(master|merge|coog-\d+\.\d+)$" &> /dev/null # coog branches ~ coog-<major>.<minor>
         [ $? -ne 0 ] && echo bad coog branch && return 1
 
         [ -z "$1" ] && echo missing repo && return 1
